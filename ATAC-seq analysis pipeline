@@ -1,0 +1,47 @@
+#1: Standard QC with fastp & alignment
+   
+   MACS2 is built for bowtie alignments, so align with bowtie2.
+   Both fastp and bowtie2 can process gzipped files
+
+
+#2: Run MACS2 for peak calling*
+    * this same process is used for ChIP-seq analyses, basically the same data. Think of ATAC data as the "negative" of ChIP-seq.
+    
+    MACS2 requires an anaconda environment and local installation——these analyses were performed using a slurm/batch scripting HPC environment.
+    
+
+#2: Run MACS2
+
+    MACS will use the -c option as the control/reference group, so all peaks will be enriched in your test vs. control group.
+        
+        This means that the command below will display open chromatin regions in old VERSUS young. 
+        
+            < macs2 callpeak -t [old1] [old2] ... -c [young1] [young2] ... > 
+        
+        * If you want to identify young VERSUS old, you need to switch the reference group.
+
+        
+#3 Now that you have peaks, you need to find out what genes/transcripts lie within those peaks using bedtools intersect (link to the bedtools intersect manual: https://bedtools.readthedocs.io/en/latest/content/tools/intersect.html)
+    
+        bedtools intersect [OPTIONS] -a <FILE> -b <FILE1, FILE2, ..., FILEN>
+        
+    Now that you have peaks, you need to find out what genes/transcripts lie within those regions
+
+        There's a lot of different ways to do this, but here I chose to use bedtools Intersect intervals to see where my peaks and TEs overlaps
+    
+        To do this you need:
+        1) Your BAM/BED/bedGraph/GFF/VCF/EncodePeak formatted peaks file
+                The MACS2 peaks output is an xls file and it will work for bedtools, BUT you first have to comment out the header line (bed files don't have headers). Otherwise, bedtools doesn't know how to read the file (i.e., the first "readable" line of your file must start with chr1 start#  stop# etc.).
+       
+        2) A bedfile for your genome --> in this case, I made a .bed using the repeatmasker hg38 TE annotation.*
+
+                * the repeatmasker bed file is big, so be cautious about opening it.
+    
+    Bedtools options: -wo = write the original A and B entries, plus the number of base pairs of overlap between the two features.
+                      Only A features with overlap are reported. Restricted by the fraction- and reciprocal option.
+        
+            This retains your peak information, while also showing where they intersect and which TEs can be found at the overlapping loci.
+        
+            bedtools intersect -a <output_vs_reference_peaks.xls> \ 
+            -b <reference_genome.bed>\
+            -wo > <output_vs_reference_intersect.bed>
