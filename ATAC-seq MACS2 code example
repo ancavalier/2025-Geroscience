@@ -23,4 +23,6 @@ macs2 callpeak -t <old_file1.bam> <old_file2.bam> <old_file3.bam> <old_file4.bam
 -c <young_file1.bam> <young_file2.bam> <young_file3.bam> <young_file4.bam> \
 -f BAMPE -g hs -n Old_vs_young -q 0.01
 
-wait
+bedtools intersect -a <output_vs_reference_peaks.xls> \ 
+            -b <reference_genome.bed>\
+            -wo > <output_vs_reference_intersect.bed>
