@@ -1,0 +1,46 @@
+Step 1: Trim and QC fastq files
+  
+    fastp -i <file1_R1.fastq.gz> \
+    -I <file1_R2.fastq.gz> \
+    -o <file1_R1.fastq.trimmed.gz> \
+    -O <file1_R2.fastq.trimmed.gz> \
+    -h <file1.fastp.html>
+
+Step 2: Align to genome and generate gene counts
+
+    #Before running STAR, you need to generate a genome directory for reference
+      #mkdir star-genome in the directory with the rest of your files
+      #sjdbOverhang is your read length minus 1 (e.g., 151 bp reads = 150 Overhang)
+        
+    STAR --runMode genomeGenerate --genomeDir /file_directory/star-genome \
+    --sjdbOverhang 150 \
+    --sjdbGTFfile /path_to_genome_gtf/genes.gtf \
+    --genomeFastaFiles /path_to_genome-fasta/genome.fa \
+    --runThreadN 24
+
+  #Now you can run STAR using that reference genome directory
+  #Overhang between genome directory and samples MUST match!
+
+    STAR --runThreadN 24 --runMode alignReads \
+    --genomeDir /file_directory/star-genome \
+    --sjdbGTFfile /path_to_genome_gtf/genes.gtf  \
+    --sjdbOverhang 150 \
+    --readFilesIn gunzip -c <file1_R1.fastq.trimmed.gz> <file1_R2.fastq.trimmed.gz> \
+    --outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 \
+    --outSAMtype BAM Unsorted --winAnchorMultimapNmax 200 --outFilterMultimapNmax 100 \
+    --outFileNamePrefix <file1>
+
+Step 3: Run TEcount module within TEtranscripts
+
+  #TEtranscripts requires a custom python environment and a gtf repeatmasker file with annotations for transposable elements and other multimappers. Pre-assembled repeatMasker gfts and more information of TEtranscripts are available through the Hammell Lab website (https://www.mghlab.org/software/tetranscripts)
+
+    source /path_to_custom_env/bin/activate
+    export PATH=$PATH:/path_to_/pysam_packages/
+    export PATH=$PATH:/path/to/TEtranscripts-<version.number>/bin
+    export PATH=$PATH:/path_to/samtools
+    export PATH=$PATH:/path_to/anaconda
+
+    TEcount -b <file1_Aligned.bam> \
+    --GTF /path_to_genome_gtf/genes.gtf \
+    --TE /path_to/rmsk_TE.gtf \
+    --mode multi --project <file1_prefix>
