@@ -1,0 +1,26 @@
+cd /path_to_files/
+
+#load anaconda, if using
+#export path to software directory
+#activate MACS2 python environment
+
+module load anaconda
+export PATH=$PATH:/path_to/software/MACS
+conda activate MACS2
+
+#run MACS2 callpeak module on mapped .bam files from bowtie alignment
+# -t is the list of "treatment" group samples 
+# -c is controls, 
+# -f specifies input format, paired-end bam files in this case
+# -g hs for homo sapiens genome
+# -n name prefix for files generated
+# -q specifies minimum adjusted pvalue threshold peaks 
+# more details on MACS2 at https://pypi.org/project/MACS2/
+
+*** There is a newer version of MACS, MACS3 that has more dedicated ATAC-seq analysis function, but MACS2 works for these purposes.
+
+macs2 callpeak -t <old_file1.bam> <old_file2.bam> <old_file3.bam> <old_file4.bam> \
+-c <young_file1.bam> <young_file2.bam> <young_file3.bam> <young_file4.bam> \
+-f BAMPE -g hs -n Old_vs_young -q 0.01
+
+wait
