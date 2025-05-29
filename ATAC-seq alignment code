@@ -1,0 +1,20 @@
+cd /path/to_file/directory/
+
+fastp -i /~/ATAC/<file1_READ1.fastq.gz> \
+-I /~/ATAC/<file1_READ2.fastq.gz> \
+-o /~/ATAC/<file1_READ1.trimmed.fastq.gz> \
+-O /~/ATAC/<file1_READ2.trimmed.fastq.gz> \
+-h /~/ATAC/<file1.fastp.html>
+
+wait
+
+bowtie2 -q -p 24 -x /path_to_hg38_bowtie_index/Homo_sapiens/UCSC/hg38/Sequence/Bowtie2Index/genome \
+-1 /~/ATAC/<file1_READ1.trimmed.fastq.gz> \
+-2 /~/ATAC/<file1_READ2.trimmed.fastq.gz> \
+-S /~/ATAC/<file1_mapped.sam>
+
+wait
+
+samtools view -bS /~/ATAC/<file1_mapped.sam> > /~/ATAC/<file1_mapped.bam>
+
+wait
