@@ -1,0 +1,61 @@
+#<file1...> denotes example file name
+
+Step 0: Make abismal reference genome, similar to what is required for STAR
+
+  abismalidx /path_to_fasta/genome.fa /path_where_you_want_directory_created/abismalindex -t 24 
+    
+    #do NOT make a directory, you're just telling the program what to call the file
+
+Step 1: fastp
+
+    fastp -i <file1_GroupA_R1.fastq.gz> -I <file1_GroupA_R2.fastq.gz> \
+    -o file1_GroupA_R1.trimmed.fastq.gz -O file1_GroupA_R2.trimmed.fastq.gz \
+    --thread 24
+
+Step 2: Run abismal
+  
+    abismal -i /path_to/abismalindex -t 24 \
+    <file1_GroupA_R1.trimmed.fastq.gz> <file1_GroupA_R2.trimmed.fastq.gz> | samtools view -bS > <file1_GroupA.bam>
+
+Step 3: Format reads, sort, and remove duplicates
+
+    mpirun -np $SLURM_NTASKS format_reads -f abismal <file1_GroupA.bam> -o <file1_GroupA_f.bam>
+  
+    samtools sort -O bam -o <file1_GroupA_fs.bam> <file1_GroupA_f.bam> -@ 24
+  
+    mpirun -np $SLURM_NTASKS duplicate-remover -S <file1_GroupA_dremove_stat.txt> <file1_GroupA_fs.bam> <file1_GroupA_fsd.bam>
+
+Step 4: Calculate bisulfite conversion rate
+
+    mpirun -np $SLURM_NTASKS bsrate -c /path_to_genome_fasta/genome.fa \
+    -o <file1_GroupA.bsrate> <file1_GroupA_fsd.bam>
+
+Step 5: methcounts & retain symmetric CpGs (will discard mutated sites)
+
+    mpirun -np $SLURM_NTASKS methcounts -c /path_to_genome_fasta/genome.fa \
+    -o <file1_GroupA.meth> <file1_GroupA_fsd.bam>
+  
+    mpirun -np $SLURM_NTASKS symmetric-cpgs -o <file1_GroupA_CpG.meth> <file1_GroupA.meth>
+
+    sort -T /path_to_/file1_directory/ -k 1,1 -k 2,2g -k 3,3 \
+    <file1_GroupA_CpG.meth> > <file1_GroupA_CpG_sorted.meth>
+
+OPTIONAL Step 6: merge samples for group A
+
+    merge-methcounts <file1_GroupA_CpG_sorted.meth> <file2_GroupA_CpG_sorted.meth> <file3_GroupA_CpG_sorted.meth> <file4_GroupA_CpG_sorted.meth> \
+    -o <GroupA_CpG_sorted_merged.meth>
+
+Step 7: hypo- and hypermethylated regions
+
+    hmr -o <GroupA-merged.hmr> <GroupA_CpG_sorted_merged.meth>
+
+Step 8: differential methylation and dmrs
+
+    methdiff -o <GroupA-vs-GroupB_merged.methdiff> <GroupA_CpG_sorted_merged.meth> <GroupB_CpG_sorted_merged.meth>
+
+    dmr <GroupA-vs-GroupB_merged.methdiff> <GroupA-merged.hmr> <GroupB-merged.hmr> <GroupA_vs_GroupB.dmr> <GroupB_vs_GroupA.dmr>
+
+Step 9: bedtools intersect
+
+    bedtools intersect -a <GroupA_vs_GroupB.dmr> -b <reference_genome.bed> -wo > <GroupA_vs_GroupB_intersect.bed>
+  
