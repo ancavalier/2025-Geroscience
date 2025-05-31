@@ -10,11 +10,14 @@ Transcriptomic analyses of TE transcripts used the standard TEtranscripts pipeli
 
 
 ATAC-seq analyses followed a standard MACS2 pipeline. If MACS2 is not installed, pip can be used as shown below:
+
 More information on MACS2 can be found at: https://pypi.org/project/MACS2/
 
 
-WGBS analyses used the MethPipe software package, which has since been retired. More information on MetPipe can be found here: https://github.com/smithlabcode/methpipe
+WGBS analyses used the MethPipe software package, which has since been retired. More information on MetPipe can be found here: https://github.com/smithlabcode/methpipe.
+
 However, future analyses may with to use the newer package, DNMTools (https://github.com/smithlabcode/dnmtools)
 
 To determine if dysregulated TE transcripts were potentially originating from hypomethylated and/or chromatin-accessible genome regions, we intersected the epigenomic alignment data (peaks for ATAC-seq and dmrs for WGBS) with a human genome repeatmasker bed file that contains locations of each insertion/instance.
+
 Bedtools was utilized through the intersect function. More information on the bedtools intersect program, see https://bedtools.readthedocs.io/en/latest/content/tools/intersect.html
